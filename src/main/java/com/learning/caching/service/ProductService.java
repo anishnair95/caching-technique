@@ -8,6 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+// TODO abstract class
+// multiple implementation
+// 1. DB based
+// 2. Cache aside based
+// 3. Read-through based
 @Service
 public class ProductService {
 
