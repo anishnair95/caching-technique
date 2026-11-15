@@ -50,6 +50,28 @@ public class WriteThroughProductService {
     }
 
     /**
+     * Create a product in the database, then add a Redis cache entry.
+     * Write-though cache mechanism used here
+     * @param product the product values to persist
+     * @return the created product
+     */
+    public Product createProduct(Product product) {
+
+        // 1. Create MySQL first
+        Product created =
+                productService.createProduct(product);
+
+        // 2. Update Redis with the latest DB value
+        String key = CACHE_PREFIX + created.getId();
+
+        writeThroughCache.put(key, created);
+
+        // 3. Return updated product
+        return created;
+    }
+
+
+    /**
      * Updates a product in the database, then refreshes its Redis cache entry.
      * The cache is updated only after the database update succeeds.
      * Write-though cache mechanism used here
