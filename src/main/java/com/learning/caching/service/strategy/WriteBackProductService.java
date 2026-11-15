@@ -7,6 +7,7 @@ import com.learning.caching.service.cache.WriteThroughCache;
 import com.learning.caching.service.worker.WriteBackDatabaseWorker;
 import org.springframework.stereotype.Service;
 
+/** Serves products through a cache and persists updates asynchronously to the backing service. */
 @Service
 public class WriteBackProductService {
 
@@ -18,6 +19,14 @@ public class WriteBackProductService {
     private final WriteThroughCache writeThroughCache;
     private final WriteBackDatabaseWorker databaseWorker;
 
+    /**
+     * Creates a write-back service using the product, cache, and persistence worker services.
+     *
+     * @param productService backing service for product operations
+     * @param readThroughCache cache used to retrieve products on a miss
+     * @param writeThroughCache cache used to update cached products
+     * @param databaseWorker worker that asynchronously persists product updates
+     */
     public WriteBackProductService(
             ProductService productService,
             ReadThroughCache readThroughCache,
@@ -30,6 +39,12 @@ public class WriteBackProductService {
         this.databaseWorker = databaseWorker;
     }
 
+    /**
+     * Retrieves a product through the cache, loading it from the backing service on a miss.
+     *
+     * @param id identifier of the product to retrieve
+     * @return the requested product
+     */
     public Product getProduct(Long id) {
 
         String key = CACHE_PREFIX + id;
@@ -42,17 +57,11 @@ public class WriteBackProductService {
     }
 
     /**
-     * Redis is updated before the background task is scheduled. The application doesn't wait for the worker to finish.
+     * Updates the cache immediately and schedules persistence to the backing service asynchronously.
      *
-     * Write sequence
-     * writeThroughCache.put(key, updated);
-     *
-     * databaseWorker.persistProduct(id, updated);
-     *
-     * return updated;
-     * @param id
-     * @param request
-     * @return
+     * @param id identifier of the product to update
+     * @param request product data to apply
+     * @return the updated product
      */
     public Product updateProduct(Long id, Product request) {
 

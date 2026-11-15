@@ -30,6 +30,12 @@ public class ReadThroughCache {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a read-through cache backed by Redis and the supplied JSON mapper.
+     *
+     * @param redisTemplate Redis operations used to read, write, and evict cache entries
+     * @param objectMapper mapper used to deserialize and serialize cached values
+     */
     public ReadThroughCache(
             StringRedisTemplate redisTemplate,
             ObjectMapper objectMapper) {

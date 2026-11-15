@@ -7,23 +7,22 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
+/**
+ * Configures the single-thread executor used for asynchronous write-back tasks.
+ *
+ * <p>One worker processes submitted tasks in order in this lab, avoiding
+ * concurrent updates overwriting each other out of order. This is a learning
+ * simplification, not a multi-instance ordering guarantee.
+ */
 @Configuration
 @EnableAsync
-
-/**
- * Why one thread?
- *
- * Suppose two updates happen:
- * Update 1: Price = 2000
- * Update 2: Price = 2500
- *
- *
- * If two worker threads process these updates concurrently, Update 1 might finish after Update 2 and overwrite the newer database value.
- *
- * Using one worker thread in our lab ensures tasks are processed in submission order. This is a learning simplification, not a complete multi-instance ordering guarantee.
- */
 public class AsyncConfig {
 
+    /**
+     * Creates the executor for asynchronous write-back tasks.
+     *
+     * @return the initialized single-thread write-back executor
+     */
     @Bean(name = "writeBackExecutor")
     public Executor writeBackExecutor() {
 

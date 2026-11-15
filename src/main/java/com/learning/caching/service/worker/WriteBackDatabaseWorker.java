@@ -7,6 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+/**
+ * Persists product updates asynchronously as part of the write-back cache strategy.
+ */
 @Component
 public class WriteBackDatabaseWorker {
 
@@ -15,12 +18,20 @@ public class WriteBackDatabaseWorker {
 
     private final ProductService productService;
 
+    /**
+     * Creates a worker that persists products through the product service.
+     *
+     * @param productService database-backed product operations
+     */
     public WriteBackDatabaseWorker(ProductService productService) {
         this.productService = productService;
     }
 
     /**
-     * The @Async annotation tells Spring to execute this method using the configured executor instead of blocking the caller.
+     * Persists a product update asynchronously using the configured write-back executor.
+     *
+     * @param id the product identifier to update
+     * @param product the product values to persist
      */
     @Async("writeBackExecutor")
     public void persistProduct(Long id, Product product) {
