@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Applies a write-through caching strategy to product operations.
- * Reads use {@link ReadThroughCache}; successful database updates are written
- * to Redis, and successful deletions evict the corresponding cache entry.
+ * Reads use read-through loading; successful creates and updates refresh Redis,
+ * and successful deletions evict the corresponding cache entry.
  */
 @Service
 public class WriteThroughProductService {
@@ -21,6 +21,13 @@ public class WriteThroughProductService {
     private final ReadThroughCache readThroughCache;
     private final WriteThroughCache writeThroughCache;
 
+    /**
+     * Creates a product service using database persistence and read/write-through caches.
+     *
+     * @param productService database-backed product operations
+     * @param readThroughCache cache used to load and retrieve products
+     * @param writeThroughCache cache used to update and evict products
+     */
     public WriteThroughProductService(
             ProductService productService,
             ReadThroughCache readThroughCache,
@@ -33,7 +40,7 @@ public class WriteThroughProductService {
 
     /**
      * Retrieves a product from Redis, loading it from the database on a cache miss.
-     * Read-through cache mechanism used
+     *
      * @param id the product identifier
      * @return the matching product
      */
@@ -50,25 +57,47 @@ public class WriteThroughProductService {
     }
 
     /**
+     * Creates a product in the database, then caches the persisted product in Redis.
+     *
+     * @param product the product values to persist
+     * @return the created product
+     */
+    public Product createProduct(Product product) {
+
+        // Persist first so the generated ID is available for the cache key.
+        Product created =
+
+                productService.createProduct(product);
+
+        // Cache the persisted value in Redis.
+        String key = CACHE_PREFIX + created.getId();
+
+        writeThroughCache.put(key, created);
+
+        // Return the database result.
+        return created;
+    }
+
+    /**
      * Updates a product in the database, then refreshes its Redis cache entry.
      * The cache is updated only after the database update succeeds.
-     * Write-though cache mechanism used here
+     *
      * @param id the product identifier
      * @param product the product values to persist
      * @return the updated product
      */
     public Product updateProduct(Long id, Product product) {
 
-        // 1. Update MySQL first
+        // Persist first; update the cache only after the database succeeds.
         Product updated =
                 productService.updateProduct(id, product);
 
-        // 2. Update Redis with the latest DB value
+        // Cache the persisted value in Redis.
         String key = CACHE_PREFIX + id;
 
         writeThroughCache.put(key, updated);
 
-        // 3. Return updated product
+        // Return the database result.
         return updated;
     }
 
@@ -80,7 +109,7 @@ public class WriteThroughProductService {
      */
     public void deleteProduct(Long id) {
 
-        // 1. Delete from MySQL
+        // Delete first; retain the cache entry if the database operation fails.
         productService.deleteProduct(id);
 
         // 2. Remove cached value

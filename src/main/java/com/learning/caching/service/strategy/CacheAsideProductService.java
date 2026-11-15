@@ -11,6 +11,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 
+/** Reads products from Redis when available and otherwise loads them from the product service. */
 @Service
 public class CacheAsideProductService {
 
@@ -24,6 +25,13 @@ public class CacheAsideProductService {
     private final ObjectMapper objectMapper;
     private final ProductService productService;
 
+    /**
+     * Creates a cache-aside product service using Redis, JSON mapping, and the backing product service.
+     *
+     * @param redisTemplate Redis access for cached product values
+     * @param objectMapper mapper used to serialize and deserialize products
+     * @param productService backing service for product operations
+     */
     public CacheAsideProductService(
             StringRedisTemplate redisTemplate,
             ObjectMapper objectMapper,
@@ -34,6 +42,12 @@ public class CacheAsideProductService {
         this.productService = productService;
     }
 
+    /**
+     * Returns a product from Redis or loads and caches it on a cache miss.
+     *
+     * @param id identifier of the product to retrieve
+     * @return the requested product
+     */
     public Product getProduct(Long id) {
 
         String cacheKey = CACHE_PREFIX + id;
@@ -84,6 +98,13 @@ public class CacheAsideProductService {
         return product;
     }
 
+    /**
+     * Updates a product in the backing service and invalidates its cached value.
+     *
+     * @param id identifier of the product to update
+     * @param product product data to apply
+     * @return the updated product
+     */
     public Product updateProduct(Long id, Product product) {
 
         // Update MySQL first
@@ -99,6 +120,11 @@ public class CacheAsideProductService {
         return updated;
     }
 
+    /**
+     * Deletes a product from the backing service and invalidates its cached value.
+     *
+     * @param id identifier of the product to delete
+     */
     public void deleteProduct(Long id) {
 
         // Delete from MySQL
